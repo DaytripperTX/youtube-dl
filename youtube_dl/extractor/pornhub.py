@@ -27,7 +27,10 @@ from ..utils import (
 
 
 class PornHubBaseIE(InfoExtractor):
-    _NETRC_MACHINE = 'pornhubpremium'
+
+    def __init__(self, downloader=None):
+        self._url = None
+        super(PornHubBaseIE, self).__init__(downloader=None)
 
     def _download_webpage_handle(self, *args, **kwargs):
         def dl(*args, **kwargs):
@@ -53,13 +56,18 @@ class PornHubBaseIE(InfoExtractor):
         self._login()
 
     def _login(self):
+        if self._url and (self._url.find('premium') != -1):
+            self._NETRC_MACHINE = 'pornhubpremium'
+            _LOGIN_URL = "https://www.pornhubpremium.com/premium/login"
+            login_post_url = 'https://www.pornhubpremium.com/front/authenticate'
+        else:
+            self._NETRC_MACHINE = 'pornhub'
+            _LOGIN_URL = "https://www.pornhub.com/login"
+            login_post_url = 'https://www.pornhub.com/front/authenticate'
+
         login_info = self._get_login_info()
         if login_info[0] is None:
             return
-
-        _LOGIN_URL = "https://www.pornhubpremium.com/premium/login"
-
-        login_post_url = 'https://www.pornhubpremium.com/front/authenticate'
 
         # fetch login page
         login_page = self._download_webpage(_LOGIN_URL, video_id=None, note='Fetching login page', tries=3, fatal=True)
@@ -88,6 +96,10 @@ class PornHubBaseIE(InfoExtractor):
             raise ExtractorError('Unable to login: %s' % login_error, expected=True)
         self.report_warning('Login has probably failed')
 
+    def extract(self, url):
+        self._url = url
+        print (self._url)
+        super(PornHubBaseIE, self).extract(url);
 
 
 class PornHubIE(PornHubBaseIE):
@@ -524,7 +536,7 @@ class PornHubPagedPlaylistBaseIE(PornHubPlaylistBaseIE):
             r'\bpage=(\d+)', url, 'page', default=None))
 
         entries = []
-        for page_num in (page, ) if page is not None else itertools.count(1):
+        for page_num in (page,) if page is not None else itertools.count(1):
             try:
                 webpage = self._download_webpage(
                     url, item_id, 'Downloading page %d' % page_num,
