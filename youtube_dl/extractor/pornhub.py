@@ -53,8 +53,6 @@ class PornHubBaseIE(InfoExtractor):
         self._login()
 
     def _login(self):
-        # login_info = self._get_login_info(username_option=None, password_option=None, netrc_machine='pornhubpremium')
-        # login_info = self._get_netrc_login_info()
         login_info = self._get_login_info()
         if login_info[0] is None:
             return
