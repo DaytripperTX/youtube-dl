@@ -98,7 +98,6 @@ class PornHubBaseIE(InfoExtractor):
 
     def extract(self, url):
         self._url = url
-        print (self._url)
         super(PornHubBaseIE, self).extract(url);
 
 
