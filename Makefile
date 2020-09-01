@@ -2,14 +2,16 @@ all: youtube-dl README.md CONTRIBUTING.md README.txt youtube-dl.1 youtube-dl.bas
 
 clean:
 	rm -rf youtube-dl.1.temp.md youtube-dl.1 youtube-dl.bash-completion README.txt MANIFEST build/ dist/ .coverage cover/ youtube-dl.tar.gz youtube-dl.zsh youtube-dl.fish youtube_dl/extractor/lazy_extractors.py *.dump *.part* *.ytdl *.info.json *.mp4 *.m4a *.flv *.mp3 *.avi *.mkv *.webm *.3gp *.wav *.ape *.swf *.jpg *.png CONTRIBUTING.md.tmp youtube-dl youtube-dl.exe
+	rm -rf youtube-dl.1.temp.md youtube-dl.1 youtube-dl.bash-completion README.txt MANIFEST build/ .coverage cover/ youtube-dl.tar.gz youtube-dl.zsh youtube-dl.fish youtube_dl/extractor/lazy_extractors.py *.dump *.part* *.ytdl *.info.json *.mp4 *.m4a *.flv *.mp3 *.avi *.mkv *.webm *.3gp *.wav *.ape *.swf *.jpg *.png CONTRIBUTING.md.tmp youtube-dl
 	find . -name "*.pyc" -delete
 	find . -name "*.class" -delete
 
 PREFIX ?= /usr/local
+#PREFIX ?= "C:/Program Files (x86)/GnuWin32"
 BINDIR ?= $(PREFIX)/bin
 MANDIR ?= $(PREFIX)/man
 SHAREDIR ?= $(PREFIX)/share
-PYTHON ?= /usr/bin/env python
+PYTHON ?= "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python36_64\python.exe"
 
 # set SYSCONFDIR to /etc if PREFIX=/usr or PREFIX=/usr/local
 SYSCONFDIR = $(shell if [ $(PREFIX) = /usr -o $(PREFIX) = /usr/local ]; then echo /etc; else echo $(PREFIX)/etc; fi)
@@ -59,10 +61,25 @@ pypi-files: youtube-dl.bash-completion README.txt youtube-dl.1 youtube-dl.fish
 
 youtube-dl: youtube_dl/*.py youtube_dl/*/*.py
 	mkdir -p zip
-	for d in youtube_dl youtube_dl/downloader youtube_dl/extractor youtube_dl/postprocessor ; do \
-	  mkdir -p zip/$$d ;\
-	  cp -pPR $$d/*.py zip/$$d/ ;\
-	done
+#	for d in youtube_dl youtube_dl/downloader youtube_dl/extractor youtube_dl/postprocessor ; do \
+#	  mkdir -p zip/"$d" ;\
+#	  cp -pPR "$d"/*.py zip/"$d"/ ;\
+#	done
+
+
+	mkdir -p zip/youtube_dl ;\
+	cp -pPR youtube_dl/*.py zip/youtube_dl/ ;\
+
+	mkdir -p zip/youtube_dl/downloader ;\
+	cp -pPR youtube_dl/downloader/*.py zip/youtube_dl/downloader/ ;\
+
+	mkdir -p zip/youtube_dl/extractor ;\
+	cp -pPR youtube_dl/extractor/*.py zip/youtube_dl/extractor/ ;\
+
+	mkdir -p zip/youtube_dl/postprocessor ;\
+	cp -pPR youtube_dl/postprocessor/*.py zip/youtube_dl/postprocessor/ ;\
+
+
 	touch -t 200001010101 zip/youtube_dl/*.py zip/youtube_dl/*/*.py
 	mv zip/youtube_dl/__main__.py zip/
 	cd zip ; zip -q ../youtube-dl youtube_dl/*.py youtube_dl/*/*.py __main__.py

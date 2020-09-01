@@ -22,10 +22,13 @@ from ..utils import (
     remove_quotes,
     str_to_int,
     url_or_none,
+    urlencode_postdata,
 )
 
 
 class PornHubBaseIE(InfoExtractor):
+    _NETRC_MACHINE = 'pornhubpremium'
+
     def _download_webpage_handle(self, *args, **kwargs):
         def dl(*args, **kwargs):
             return super(PornHubBaseIE, self)._download_webpage_handle(*args, **kwargs)
@@ -46,6 +49,48 @@ class PornHubBaseIE(InfoExtractor):
 
         return webpage, urlh
 
+    def _real_initialize(self):
+        self._login()
+
+    def _login(self):
+        # login_info = self._get_login_info(username_option=None, password_option=None, netrc_machine='pornhubpremium')
+        # login_info = self._get_netrc_login_info()
+        login_info = self._get_login_info()
+        if login_info[0] is None:
+            return
+
+        _LOGIN_URL = "https://www.pornhubpremium.com/premium/login"
+
+        login_post_url = 'https://www.pornhubpremium.com/front/authenticate'
+
+        # fetch login page
+        login_page = self._download_webpage(_LOGIN_URL, video_id=None, note='Fetching login page', tries=3, fatal=True)
+
+        login_form = self._hidden_inputs(login_page)
+        login_form.update({
+            'username': login_info[0],
+            'password': login_info[1],
+        })
+
+        response = self._download_json(
+            login_post_url, video_id=None, note='Logging in to PornHub', fatal=True,
+            data=urlencode_postdata(login_form), headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Referer': _LOGIN_URL,
+            }
+        )
+
+        # Success
+        if response.get('success') == '1':
+            return self.to_screen("Successfully authenticated")
+
+        # Error
+        login_error = response.get('message')
+        if login_error:
+            raise ExtractorError('Unable to login: %s' % login_error, expected=True)
+        self.report_warning('Login has probably failed')
+
+
 
 class PornHubIE(PornHubBaseIE):
     IE_DESC = 'PornHub and Thumbzilla'
@@ -59,7 +104,7 @@ class PornHubIE(PornHubBaseIE):
                     '''
     _TESTS = [{
         'url': 'http://www.pornhub.com/view_video.php?viewkey=648719015',
-        'md5': '1e19b41231a02eba417839222ac9d58e',
+        'md5': 'a6391306d050e4547f62b3f485dd9ba9',
         'info_dict': {
             'id': '648719015',
             'ext': 'mp4',
@@ -150,8 +195,26 @@ class PornHubIE(PornHubBaseIE):
         'url': 'https://www.pornhub.net/view_video.php?viewkey=203640933',
         'only_matching': True,
     }, {
-        'url': 'https://www.pornhubpremium.com/view_video.php?viewkey=ph5e4acdae54a82',
-        'only_matching': True,
+        'url': 'https://www.pornhubpremium.com/view_video.php?viewkey=ph5e73d39b960cd',
+        'info_dict': {
+            'id': '1331683002',
+            'ext': 'mp4',
+            'title': '"Wait, Why Is There A Dick In Me?" Slipping It Into Step Sis Zoe Parker',
+            'uploader': 'Bratty Sis',
+            'upload_date': '294663921',
+            'duration': 1513,
+            'view_count': int,
+            'like_count': int,
+            'dislike_count': int,
+            'comment_count': int,
+            'age_limit': 18,
+            'tags': list,
+            'categories': list,
+        },
+        'params': {
+            'skip_download': True,
+            'cookies': 'C:\\Users\\chad9\\Downloads\\cookies.txt',
+        },
     }]
 
     @staticmethod
@@ -169,12 +232,12 @@ class PornHubIE(PornHubBaseIE):
         host = mobj.group('host') or 'pornhub.com'
         video_id = mobj.group('id')
 
-        if 'premium' in host:
-            if not self._downloader.params.get('cookiefile'):
-                raise ExtractorError(
-                    'PornHub Premium requires authentication.'
-                    ' You may want to use --cookies.',
-                    expected=True)
+        # if 'premium' in host:
+        #     if not self._downloader.params.get('cookiefile'):
+        #         raise ExtractorError(
+        #             'PornHub Premium requires authentication.'
+        #             ' You may want to use --cookies.',
+        #             expected=True)
 
         self._set_cookie(host, 'age_verified', '1')
 
